@@ -1,0 +1,142 @@
+﻿@page "/login"
+@using Blazor.Services
+@using Shared.DTO
+@inject NavigationManager Navigation
+
+
+
+
+<h3 class="mb-4">Login</h3>
+
+<div class="card p-4" style="max-width: 400px;">
+  
+      @if (RegisterNow ==false){
+          @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class=" mt-3" style="color:red;font-size:12px;font-weight:bold">"Invalid email or password."</div>
+        }
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="text" class="form-control" @bind="loginModel.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" @bind="loginModel.PasswordHash" />
+    </div>
+
+    <button class="btn btn-primary w-100" @onclick="HandleLogin" disabled="@IsLoading" >
+       
+       @if (IsLoading)
+        {
+            <span class="spinner-border spinner-border-sm"></span>
+        
+        }
+        else
+        {
+            <span>Login</span>
+        }
+    </button>
+    <br />
+
+     <button class="btn btn-outline-success w-100" @onclick="ForRegister" >
+       
+    
+      <span>For Register</span>
+       
+    </button>
+    }
+    else
+    {
+           <div >
+         <div class="mb-3">
+        <label class="form-label">UserName</label>
+        <input type="text" class="form-control" @bind="registerModel.UserName" />
+    </div>
+    <div >
+         <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="text" class="form-control" @bind="registerModel.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" @bind="registerModel.PasswordHash" />
+    </div>
+    </div>
+
+      <button class="btn btn-primary w-100" @onclick="HandleRegister" onshow="@RegisterNow" >
+       
+    
+            <span>Register</span>
+       
+    </button>
+   
+
+</div>
+}
+ </div>
+
+@inject AuthService _authService
+@inject AppState AppState
+
+@code {
+    private LoginDTO loginModel = new LoginDTO();
+
+    private RegisterDTO registerModel = new RegisterDTO();
+    private string ErrorMessage;
+    private bool IsLoading = false;
+
+    private bool RegisterNow = false;
+
+    private bool IsLogin = false;
+
+    private async Task HandleLogin()
+    {
+        ErrorMessage = null;
+        IsLoading = true;
+
+        var result = await _authService.LoginAsync(loginModel);
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/"); // بعد از لاگین می‌ره به صفحه اصلی
+            AppState.SetLogin(true); //  اینجا وضعیت لاگین رو سراسری تنظیم می‌کنیم
+        }
+        else
+        {
+            ErrorMessage = result.ErrorMessage;
+
+        }
+
+        IsLoading = false;
+    }
+
+    private async Task HandleRegister()
+    {
+        ErrorMessage = null;
+        IsLoading = true;
+
+        var result = await _authService.RegisterAsync(registerModel);
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo("/login"); // بعد از رجیستر می‌ره به صفحه لاگین
+            RegisterNow = false;
+            loginModel =  new LoginDTO();
+        }
+        else
+        {
+            ErrorMessage = result.ErrorMessage;
+            RegisterNow = true;
+        }
+
+        IsLoading = false;
+    }
+
+    private void ForRegister()
+    {
+        RegisterNow = true;
+    }
+    
+}

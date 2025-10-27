@@ -1,0 +1,115 @@
+﻿@page "/TodoList"
+@using Shared.DTO
+@using Blazor.Services
+@using Microsoft.AspNetCore.SignalR.Client
+
+<PageTitle>ToDo list</PageTitle>
+
+<h1>ToDo list</h1>
+<button class="btn btn-primary mb-2" @onclick="NavigateToAddTask">Add Task</button>
+<div>
+    <input type="text" class="form-control mb-2" placeholder="Search by title..."
+           @oninput="OnSearchChanged" />
+</div>
+
+@if (filteredTasks != null)
+{
+   
+    <br>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>DueDate</th>
+                <th>CreatedAt</th>
+                <th>UpdatedAt</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (var task in filteredTasks)
+            {
+                <tr>
+                    <td>@task.Title</td>
+                    <td>@task.Description</td>
+                    <td>@task.Status</td>
+                    <td>@task.DueDate</td>
+                    <td>@task.CreatedAt</td>
+                    <td>@task.UpdatedAt</td>
+                    <button class="btn btn-warning" @onclick="() => UpdateTask(task.Id)">Update</button>
+                </tr>
+            }
+
+            
+        </tbody>
+    </table>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@inject TaskItemService _taskService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+
+@code {
+    private List<TaskItemDTO>? tasks;
+    private List<TaskItemDTO>? filteredTasks;
+
+    private string SearchTitle = string.Empty;
+    private HubConnection? hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        tasks = await _taskService.GetTasksAsync();
+        filteredTasks = tasks;
+
+        // 2️⃣ ساخت اتصال SignalR
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://localhost:7291/taskHub") // آدرس API که Hub در آن Map شده
+            .WithAutomaticReconnect() // اگر ارتباط قطع شد، خودش وصل شود
+            .Build();
+
+
+        // 3️⃣ گوش دادن به پیام سرور
+        hubConnection.On<TaskItemDTO>("TaskAdded", async (newTask) =>
+        {
+            tasks?.Add(newTask);
+            filteredTasks = tasks?.ToList();
+
+            await JS.InvokeVoidAsync("alert", $"🔔 New task added: {newTask.Title}");
+            StateHasChanged(); // UI را رفرش می‌کند
+        });
+
+        // 4️⃣ شروع ارتباط با Hub
+        await hubConnection.StartAsync();
+    }
+
+    private void NavigateToAddTask()
+    {
+        Navigation.NavigateTo("/ToDo");
+    }
+
+    private void UpdateTask(int id)
+    {
+        Navigation.NavigateTo($"/ToDo/{id}");
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        string searchText = e.Value?.ToString() ?? "";
+
+        if (string.IsNullOrWhiteSpace(searchText))
+            filteredTasks = tasks;
+        else
+            filteredTasks = tasks?
+                .Where(t => (!string.IsNullOrEmpty(t.Title) && t.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                            (!string.IsNullOrEmpty(t.Description) && t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+    }
+}
+

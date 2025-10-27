@@ -1,0 +1,15 @@
+
+# Ignore Visual Studio temporary files
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.vsidx
+
+# Ignore build outputs and logs
+*.log
+*.tmp
+
+# Ignore environment and local settings
+.env

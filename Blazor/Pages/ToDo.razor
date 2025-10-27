@@ -1,0 +1,87 @@
+﻿@page "/Todo"
+@page "/Todo/{id:int}"
+@using Shared.DTO
+@using Blazor.Services
+
+
+<PageTitle>ToDo </PageTitle>
+
+<h1>ToDo </h1>
+<h3>@(id.HasValue ? "Update Task" : "Add Task")</h3>
+@if (task != null)
+{
+    <div class="card p-3">
+        <input type="text" class="form-control mb-2" placeholder="Title" @bind="task.Title" />
+        <input type="text" class="form-control mb-2" placeholder="Description" @bind="task.Description" />
+        <select class="form-control mb-2" @bind="task.Status">
+            <option value="Pending">Pending</option>
+            <option value="InProgress">InProgress</option>
+            <option value="Completed">Completed</option>
+        </select>
+        <input type="text" class="form-control mb-2" @bind="task.DueDate" placeholder="DueDate 2025-10-23" />
+
+        <button class="btn btn-success" @onclick="SaveTask">Save</button>
+        <button class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+
+
+@inject TaskItemService _taskService
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter]
+    public int? id { get; set; }
+
+    private TaskItemDTO task;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (id.HasValue)
+        {
+            // اگر id موجود است، تسک را برای ویرایش از سرویس دریافت کن
+            task = await _taskService.GetTaskByIdAsync(id.Value);
+        }
+        else
+        {
+            task = new TaskItemDTO();
+            task.CreatedAt = DateTime.Now;
+            task.UpdatedAt = DateTime.Now;
+            task.Status = Shared.Enums.StatusTask.Pending;
+        }
+    }
+
+    private async Task SaveTask()
+    {
+        if (id.HasValue)
+        {
+
+            await _taskService.UpdateTaskAsync(task);
+        }
+        else
+        {
+
+            await _taskService.AddTaskAsync(task);
+        }
+
+        // برگشت به لیست تسک‌ها
+        Navigation.NavigateTo("/TodoList");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/TodoList");
+    }
+
+}
+
+
+
+
+
