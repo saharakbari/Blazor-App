@@ -84,4 +84,6 @@ The project follows **Clean Architecture** and is organized into the following l
 ```bash
 git clone https://github.com/saharakbari/Blazor-App.git
 
+Made with ❤️ by [sahar]
+
 
