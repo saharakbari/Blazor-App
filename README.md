@@ -81,11 +81,17 @@ The project follows **Clean Architecture** and is organized into the following l
 ## 📖 How to Run
 
 1. Clone the repository:
-```bash
+
 git clone https://github.com/saharakbari/Blazor-App.git
 
+
 ---
+
+
 ## 📌 Notes
    Made with ❤️ by [sahar]
+
+---
+
 
 
